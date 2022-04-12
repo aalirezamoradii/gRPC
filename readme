@@ -1,0 +1,4 @@
+.Net gRPC
+Code first (without .proto file)
+Inhiretance class input/output
+Interceptors (Middleware webApi)
