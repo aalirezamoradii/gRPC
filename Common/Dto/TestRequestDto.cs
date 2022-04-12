@@ -1,11 +1,10 @@
-using System.Runtime.Serialization;
+using ProtoBuf;
 
 namespace Common.Dto
 {
-    [DataContract]
+    [ProtoContract]
     public class TestRequestDto
     {
-        [DataMember(Order = 1)]
-        public long Id { get; set; }
+        [ProtoMember(1)] public long Id { get; set; }
     }
 }

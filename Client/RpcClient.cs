@@ -1,34 +1,67 @@
+using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using Common.Interceptors.Interceptors;
 using Grpc.Core;
+using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
-using ProtoBuf.Grpc;
 using ProtoBuf.Grpc.Client;
 
-namespace Client
+namespace Client;
+
+public class RpcClient
 {
-    public static class RpcClient
+    private readonly string _url;
+    private GrpcChannel? _channel;
+
+    private GrpcChannel Channel
     {
-        public static (TOutput, CallContext) Create<TOutput>(string url, Dictionary<string, string> headers,
-            bool allowUnencrypted = true) where TOutput : class
+        get
         {
-            GrpcClientFactory.AllowUnencryptedHttp2 = allowUnencrypted;
-            var channel = GrpcChannel.ForAddress(url);
-            var file = channel.CreateGrpcService<TOutput>();
-            if (headers == null) return (file, new CallContext());
-            var metadata = new Metadata();
+            if (_channel != null && _channel.State != ConnectivityState.Shutdown)
+                return _channel;
+
+            return _channel ??= GrpcChannel.ForAddress(_url, new GrpcChannelOptions
+            {
+                HttpHandler = new SocketsHttpHandler
+                {
+                    EnableMultipleHttp2Connections = true,
+                    PooledConnectionIdleTimeout = Timeout.InfiniteTimeSpan,
+                    KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+                    KeepAlivePingTimeout = TimeSpan.FromSeconds(30)
+                }
+            });
+        }
+    }
+
+    public Interceptor? Interceptor { get; set; }
+
+    public bool AllowUnencrypted
+    {
+        get => GrpcClientFactory.AllowUnencryptedHttp2;
+        set => GrpcClientFactory.AllowUnencryptedHttp2 = value;
+    }
+
+    public RpcClient(string url)
+    {
+        _url = url;
+    }
+
+    public TOutput Create<TOutput>(Dictionary<string, string>? headers = null) where TOutput : class
+    {
+        var metadata = new Metadata();
+        if (headers != null)
             foreach (var (k, v) in headers)
                 metadata.Add(k, v);
 
-            return (file, new CallContext(new CallOptions(metadata)));
-        }
+        var invoker = Channel.Intercept(new GrpcClientContext(metadata));
 
-        public static TOutput Create<TOutput>(string url, bool allowUnencrypted = true) where TOutput : class
+        if (Interceptor is not null)
         {
-            GrpcClientFactory.AllowUnencryptedHttp2 = allowUnencrypted;
-            var channel = GrpcChannel.ForAddress(url);
-            var file = channel.CreateGrpcService<TOutput>();
-
-            return file;
+            invoker = invoker.Intercept(Interceptor);
         }
+
+        return invoker.CreateGrpcService<TOutput>();
     }
 }

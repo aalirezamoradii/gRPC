@@ -1,11 +1,11 @@
 ﻿{
   "profiles": {
-    "gRPC": {
+    "Client": {
       "commandName": "Project",
       "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://*:2022"
+        "ASPNETCORE_URLS": "http://*:2020"
       }
     }
   }

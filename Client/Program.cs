@@ -1,40 +1,38 @@
 using System;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using Client;
 using Common.Dto;
 using Common.Services;
 
-namespace Client
+var client = new RpcClient("http://localhost:2022");
+
+var test = client.Create<ITestService>();
+var request1 = new TestRequestDto
 {
-    public class Program
-    {
-        /// <summary>
-        /// You can change url in LaunchSetting.json on gRPC/Properties project
-        /// </summary>
-        private const string Url = "http://localhost:2020";
+    Id = 1
+};
 
-        public static async Task Main(string[] args)
-        {
-            // You can add header typeof Dictionary<string, string>
-            // var (test, context) = RpcClient.Create<ITestService>(Url, new Dictionary<string, string>());
-            
-            // Create client gRPC with interface service and url 
-            var test = RpcClient.Create<ITestService>(Url);
+Console.WriteLine();
+Console.WriteLine();
+Console.WriteLine();
 
-            var requestDto = new TestRequestDto
-            {
-                Id = 1
-            };
-            
-            // var result = test.Test(new TestRequestDto { Id = 1}, context);
-            
-            // Send request and get result of async
-            var result = await test.TestAsync(requestDto);
+Console.ForegroundColor = ConsoleColor.Red;
+Console.WriteLine("Without inheritance request/result");
+var result1 = test.Test(request1);
+Console.ForegroundColor = ConsoleColor.Yellow;
+Console.WriteLine(JsonSerializer.Serialize(result1));
+Console.ForegroundColor = (ConsoleColor) (-1);
 
-            var json = JsonSerializer.Serialize(result);
-            Console.WriteLine(json);
-        }
-        
-    }
-}
+Console.WriteLine();
+Console.WriteLine();
+Console.WriteLine();
+var request2 = new InheritanceTestDto
+{
+    Id = 2
+};
+Console.ForegroundColor = ConsoleColor.Red;
+Console.WriteLine("With inheritance request/result");
+var result2 = test.Test(request2);
+Console.ForegroundColor = ConsoleColor.Green;
+Console.WriteLine(JsonSerializer.Serialize(result2));
+Console.ForegroundColor = (ConsoleColor) (-1);

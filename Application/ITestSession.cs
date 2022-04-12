@@ -7,5 +7,6 @@ namespace Application
     {
         Task<TestResultDto> TestAsync(TestRequestDto requestDto);
         TestResultDto Test(TestRequestDto requestDto);
+        Task<TestResultDto> TestAsync(InheritanceTestDto requestDto);
     }
 }
